@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+    depends_on:
+      - backend-node
+    networks:
+      - vertex-network
+
+  # Backend Node.js - Orquestrador
+  backend-node:
+    build:
+      context: ./backend-node
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - PYTHON_API_URL=http://backend-python:8000
+      - COINGECKO_API_URL=https://api.coingecko.com/api/v3
+      - NODE_ENV=production
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      - backend-python
+    networks:
+      - vertex-network
+
+  # Backend Python - Análise Preditiva
+  backend-python:
+    build:
+      context: ./backend-python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=False
+    networks:
+      - vertex-network
+
+networks:
+  vertex-network:
+    driver: bridge
